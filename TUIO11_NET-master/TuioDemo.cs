@@ -16,10 +16,13 @@ using System.Threading;
 using System.Timers;
 using System.Net.Mail;
 using static System.Windows.Forms.LinkLabel;
+using System.Text.RegularExpressions;
 
 
 public class TuioDemo : Form, TuioListener
 {
+    int y_handindex = 0;
+    int x_handindex = 0;
     string macmessage;
     int time_between_sending = 0;
     private TuioClient client;
@@ -1003,6 +1006,42 @@ public class TuioDemo : Form, TuioListener
             // Draw the country message on the screen
             g.DrawString(country, font, brush, point);
         }
+        if(x_handindex != 0 && y_handindex != 0)
+        {
+            int radius = 20; // Example radius
+            g.DrawEllipse(Pens.Pink, x_handindex - radius, y_handindex - radius, radius * 2, radius * 2);
+
+            if ((x_handindex >= 630 && x_handindex <= 780) && (y_handindex >= 130 && y_handindex <=260))
+            {
+                startBrush = new SolidBrush(Color.DarkGreen);
+                Message_To_Send_To_Client = "face_recogention";
+            }
+            else
+            {
+                startBrush = new SolidBrush(Color.Green);
+                Message_To_Send_To_Client = null;
+            }
+
+            if ((x_handindex >= 410 && x_handindex <= 770) && (y_handindex >= 330 && y_handindex <= 490))
+            {
+                showspecificplayerresults = new SolidBrush(Color.DarkViolet);
+            }
+            else
+            {
+                showspecificplayerresults = new SolidBrush(Color.Indigo);
+            }
+
+
+            if ((x_handindex >= 410 && x_handindex <= 570) && (y_handindex >= 110 && y_handindex <= 270))
+            {
+                endBrush = new SolidBrush(Color.IndianRed);
+            }
+            else
+            {
+                endBrush = new SolidBrush(Color.Red);
+            }
+
+        }
     }
 
     public void Login(String MacAdress)
@@ -1343,13 +1382,10 @@ public class TuioDemo : Form, TuioListener
                 {
                     macmessage = Encoding.UTF8.GetString(buffer, 0, bytesRead);
 
-                    if (isLogin == false && Message_To_Send_To_Client == "face_recogention")
-                    {
-                        getface(macmessage);
-                        Message_To_Send_To_Client = null;
-                    }
+
 
                     /*
+                     * 
                     
                     if (isTeacherLogin == false)
                     {
@@ -1374,6 +1410,33 @@ public class TuioDemo : Form, TuioListener
                    */
 
                     Debug.WriteLine($"Received from server: {macmessage}");
+
+                    if (macmessage != null)
+                    {
+                        // Use a regular expression to extract the numbers inside the parentheses
+                        var match = Regex.Match(macmessage, @"\((\d+),\s*(\d+)\)");
+
+                        if (match.Success)
+                        {
+                            // Parse the numbers into x and y variables
+                            x_handindex = int.Parse(match.Groups[1].Value);
+                            y_handindex = int.Parse(match.Groups[2].Value);
+
+                            Console.WriteLine($"x: {x_handindex}, y: {y_handindex}");
+                        }
+                        else
+                        {
+                            Console.WriteLine("Coordinates not found.");
+                        }
+
+                    }
+
+                    if (isLogin == false && Message_To_Send_To_Client == "face_recogention")
+                    {
+                        getface(macmessage);
+                        Message_To_Send_To_Client = null;
+                    }
+
                 }
                 
                 if(Message_To_Send_To_Client !=null)
